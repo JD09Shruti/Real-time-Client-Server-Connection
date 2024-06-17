@@ -1,0 +1,33 @@
+name: Build and Deploy Service
+
+on:
+  push:
+    branches:
+      - build-and-deploy
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Build Executable
+        run: pyinstaller --onefile client.py
+      
+      - name: Install NSSM
+        run: |
+          Invoke-WebRequest "https://nssm.cc/release/nssm-2.24.zip" -OutFile "nssm.zip"
+          Expand-Archive "nssm.zip" -DestinationPath "nssm"
+      
+      - name: Install Service
+        run: |
+          .\nssm\nssm.exe stop MyService
+          .\nssm\nssm.exe remove MyService confirm
+          .\nssm\nssm.exe install MyService "C:\Users\VJ1HD3U\OneDrive - Deere & Co\Documents\final-client-server\client.exe"
+          .\nssm\nssm.exe set MyService AppDirectory "C:\Users\VJ1HD3U\OneDrive - Deere & Co\Documents\final-client-server\"
+          .\nssm\nssm.exe set MyService Start SERVICE_AUTO_START
+          .\nssm\nssm.exe start MyService
